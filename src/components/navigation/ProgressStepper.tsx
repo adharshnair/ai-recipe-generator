@@ -8,7 +8,7 @@ export function ProgressStepper({ activeStep = 0 }: ProgressStepperProps) {
   return (
     <nav className="stepper" aria-label="Recipe generator steps">
       {steps.map((step, index) => (
-        <div className={`step ${index === activeStep ? 'is-active' : ''}`} key={step}>
+        <div className={`step ${index === activeStep ? 'is-active' : ''} ${index < activeStep ? 'is-complete' : ''}`} key={step}>
           <span className="step-number">{String(index + 1).padStart(2, '0')}</span>
           <span>{step}</span>
         </div>

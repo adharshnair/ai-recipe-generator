@@ -1,6 +1,6 @@
 import { motion } from 'motion/react'
 import { ArrowRight } from 'lucide-react'
-import { ProgressStepper } from '../components/navigation/ProgressStepper'
+import { useEffect } from 'react'
 import { SkillCard } from '../components/wizard/SkillCard'
 import { skillLevels } from '../data/skill-levels'
 
@@ -11,10 +11,20 @@ type SkillSelectionPageProps = {
 }
 
 export function SkillSelectionPage({ selectedSkill, onSkillSelect, onContinue }: SkillSelectionPageProps) {
+  useEffect(() => {
+    function handleShortcut(event: KeyboardEvent) {
+      if ((event.metaKey || event.ctrlKey) && event.key === 'Enter' && selectedSkill) {
+        event.preventDefault()
+        onContinue()
+      }
+    }
+
+    window.addEventListener('keydown', handleShortcut)
+    return () => window.removeEventListener('keydown', handleShortcut)
+  }, [onContinue, selectedSkill])
+
   return (
     <section className="wizard" aria-labelledby="page-title">
-      <ProgressStepper activeStep={0} />
-
       <div className="intro">
         <motion.div className="intro-kicker" initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4 }}>
           <span className="kicker-line" /> step one of four

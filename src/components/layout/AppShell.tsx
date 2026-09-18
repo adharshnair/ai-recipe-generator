@@ -3,9 +3,10 @@ import type { ReactNode } from 'react'
 
 type AppShellProps = {
   children: ReactNode
+  headerContent?: ReactNode
 }
 
-export function AppShell({ children }: AppShellProps) {
+export function AppShell({ children, headerContent }: AppShellProps) {
   return (
     <main className="app-shell">
       <div className="spotlight spotlight-left" />
@@ -16,6 +17,7 @@ export function AppShell({ children }: AppShellProps) {
           <span className="brand-mark"><ChefHat size={14} strokeWidth={2.5} /></span>
           <span>mise</span>
         </a>
+        {headerContent}
         <div className="topbar-status"><span className="status-dot" /> recipe lab</div>
       </header>
 

@@ -5,19 +5,29 @@ import type { Recipe } from '../../data/recipe-schema'
 type RecipeCardProps = {
   recipe: Partial<Recipe>
   index: number
+  onOpen: () => void
 }
 
-export function RecipeCard({ recipe, index }: RecipeCardProps) {
+export function RecipeCard({ recipe, index, onOpen }: RecipeCardProps) {
   return (
     <motion.article
       className="recipe-card"
+      role="button"
+      tabIndex={0}
+      onClick={onOpen}
+      onKeyDown={(event) => {
+        if (event.key === 'Enter' || event.key === ' ') {
+          event.preventDefault()
+          onOpen()
+        }
+      }}
       initial={{ opacity: 0, y: 18 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <div className="recipe-card-topline">
         <span className="recipe-match"><Sparkles size={12} /> {recipe.matchScore ?? '--'}% match</span>
-        <button className="recipe-open" type="button" aria-label={`Open ${recipe.title ?? 'recipe'}`}>
+        <button className="recipe-open" type="button" aria-label={`Open ${recipe.title ?? 'recipe'}`} onClick={(event) => { event.stopPropagation(); onOpen() }}>
           <ArrowUpRight size={16} />
         </button>
       </div>

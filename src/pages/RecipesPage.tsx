@@ -1,7 +1,9 @@
 import { motion } from 'motion/react'
 import { AlertCircle, ArrowLeft, Sparkles } from 'lucide-react'
 import { RecipeCard } from '../components/recipe/RecipeCard'
+import { RecipeDetailsDialog } from '../components/recipe/RecipeDetailsDialog'
 import type { Recipe } from '../data/recipe-schema'
+import { useState } from 'react'
 
 type RecipesPageProps = {
   recipes: Array<Partial<Recipe>>
@@ -11,6 +13,8 @@ type RecipesPageProps = {
 }
 
 export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPageProps) {
+  const [selectedRecipe, setSelectedRecipe] = useState<Partial<Recipe> | null>(null)
+
   return (
     <section className="wizard recipes-page" aria-labelledby="recipes-title">
       <div className="intro recipes-intro">
@@ -33,7 +37,7 @@ export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPagePr
 
       {recipes.length > 0 && (
         <div className={`recipe-grid recipe-grid-${Math.min(recipes.length, 3)}`}>
-          {recipes.map((recipe, index) => <RecipeCard key={recipe.id ?? index} recipe={recipe} index={index} />)}
+          {recipes.map((recipe, index) => <RecipeCard key={recipe.id ?? index} recipe={recipe} index={index} onOpen={() => setSelectedRecipe(recipe)} />)}
         </div>
       )}
 
@@ -41,6 +45,8 @@ export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPagePr
         <button className="back-button" type="button" onClick={onBack}><ArrowLeft size={16} /> Adjust ingredients</button>
         {isLoading && <span className="stream-status"><span /> streaming ideas</span>}
       </div>
+
+      <RecipeDetailsDialog recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
     </section>
   )
 }

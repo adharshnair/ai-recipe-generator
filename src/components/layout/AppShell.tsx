@@ -1,5 +1,6 @@
 import { ChefHat } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { ThemeSwitcher } from '../theme/ThemeSwitcher'
 
 type AppShellProps = {
   children: ReactNode
@@ -18,7 +19,10 @@ export function AppShell({ children, headerContent }: AppShellProps) {
           <span>mise</span>
         </a>
         {headerContent}
-        <div className="topbar-status"><span className="status-dot" /> recipe lab</div>
+        <div className="header-actions">
+          <div className="topbar-status"><span className="status-dot" /> recipe lab</div>
+          <ThemeSwitcher />
+        </div>
       </header>
 
       {children}

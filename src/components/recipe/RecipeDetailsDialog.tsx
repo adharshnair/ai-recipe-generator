@@ -46,7 +46,7 @@ export function RecipeDetailsDialog({ recipe, onClose }: RecipeDetailsDialogProp
         <div className="recipe-dialog-meta">
           <span><Clock3 size={14} /> {recipe.prepTime ?? 'Time varies'}</span>
           <span>{recipe.difficulty ?? 'Flexible'} technique</span>
-          <span>{recipe.matchScore ?? '--'}% pantry match</span>
+          <span>{recipe.matchScore ?? 'Pantry match pending'}</span>
         </div>
 
         <div className="recipe-dialog-body">
@@ -54,13 +54,13 @@ export function RecipeDetailsDialog({ recipe, onClose }: RecipeDetailsDialogProp
             <div className="recipe-dialog-section">
               <h3>In your kitchen</h3>
               <ul className="measurement-list">
-                {(recipe.ingredientsUsed ?? []).map((ingredient) => <li key={ingredient}>{ingredient}</li>)}
+                {(recipe.ingredientsUsed ?? []).map((ingredient) => <li key={ingredient.item}>{ingredient.quantity} {ingredient.item}</li>)}
               </ul>
             </div>
             <div className="recipe-dialog-section missing-section">
               <h3>Pick up first</h3>
               <ul className="measurement-list">
-                {(recipe.missingIngredients ?? []).map((ingredient) => <li key={ingredient}>{ingredient}</li>)}
+                {(recipe.missingIngredients ?? []).map((ingredient) => <li key={ingredient.item}>{ingredient.quantity} {ingredient.item}</li>)}
               </ul>
             </div>
           </div>

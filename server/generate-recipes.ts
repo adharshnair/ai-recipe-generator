@@ -1,62 +1,53 @@
-import { createOpenAI } from '@ai-sdk/openai'
-import { streamObject } from 'ai'
+import { createGoogleGenerativeAI } from '@ai-sdk/google'
+import { Output, streamText } from 'ai'
 import type { IncomingMessage, ServerResponse } from 'node:http'
 import { recipeResponseSchema, type Recipe } from '../src/data/recipe-schema.ts'
 
 type RecipeRequest = {
-  skill: string
+  skill?: string
+  skillLevel?: string
   ingredients: string[]
 }
 
-const fallbackRecipes: Recipe[] = [
-  {
-    id: 'pantry-glow-up',
-    title: 'Golden Pantry Skillet',
-    prepTime: '20 min',
-    difficulty: 'Easy',
-    matchScore: 96,
-    summary: 'A fast, savory skillet that lets your everyday ingredients do the work.',
-    ingredientsUsed: ['2 eggs', '2 cloves garlic', '1 cup cooked rice'],
-    missingIngredients: ['1 tbsp soy sauce', '1 tsp sesame oil'],
-    steps: ['Warm the rice in a hot skillet.', 'Add garlic and cook until fragrant.', 'Fold in the eggs and finish with soy sauce.'],
-    chefTip: 'Let the rice sit undisturbed for a minute so the edges get crisp.',
-  },
-  {
-    id: 'bright-tomato-pasta',
-    title: 'Bright Tomato Pasta',
-    prepTime: '25 min',
-    difficulty: 'Easy',
-    matchScore: 89,
-    summary: 'Silky tomato pasta with a garlicky finish and plenty of weeknight energy.',
-    ingredientsUsed: ['200 g pasta', '2 tomatoes', '2 cloves garlic'],
-    missingIngredients: ['30 g parmesan', '2 tbsp olive oil'],
-    steps: ['Boil the pasta until just tender.', 'Saute garlic and tomatoes until glossy.', 'Toss the pasta through the sauce and finish with parmesan.'],
-    chefTip: 'Save a splash of pasta water to make the sauce cling.',
-  },
-  {
-    id: 'green-herb-omelet',
-    title: 'Green Herb Omelet',
-    prepTime: '12 min',
-    difficulty: 'Medium',
-    matchScore: 82,
-    summary: 'A soft, quick omelet built around whatever fresh greens are waiting nearby.',
-    ingredientsUsed: ['3 eggs', '1 handful spinach', '1 clove garlic'],
-    missingIngredients: ['1 tbsp butter', '30 g soft cheese'],
-    steps: ['Wilt the spinach with garlic.', 'Whisk the eggs and pour them into the pan.', 'Fold gently around the greens and serve warm.'],
-    chefTip: 'Pull the omelet from the heat while the center is still slightly glossy.',
-  },
-]
+function buildFallbackRecipes(ingredients: string[], skill: string): Recipe[] {
+  const pantry = ingredients.map((item) => item.trim()).filter(Boolean)
+  const used = pantry.slice(0, 4).map((item, index) => ({ item, quantity: index === 0 ? '1 cup' : '1 portion' }))
+  const missing = [{ item: 'olive oil', quantity: '1 tbsp' }, { item: 'kosher salt', quantity: '1/2 tsp' }]
+  const main = pantry[0] ?? 'pantry ingredients'
+
+  return [
+    {
+      id: 'pantry-skillet', title: `${main} ${skill} skillet`, prepTime: '20 min', difficulty: 'Easy', matchScore: '100% match with your pantry',
+      summary: `A practical skillet built around ${pantry.join(', ')}.`, ingredientsUsed: used, missingIngredients: missing,
+      steps: [`Prep and portion the ${pantry.join(' and ')}.`, 'Warm a skillet over medium heat and add the oil.', 'Cook until browned, season, and serve hot.'], chefTip: 'Give each ingredient room in the pan so it browns instead of steaming.',
+    },
+    {
+      id: 'pantry-bowl', title: `${main} comfort bowl`, prepTime: '25 min', difficulty: 'Easy', matchScore: '92% match with your pantry',
+      summary: `A flexible bowl that makes ${main} the center of the meal.`, ingredientsUsed: used.slice(0, 3), missingIngredients: [{ item: 'lemon', quantity: '1/2' }],
+      steps: [`Rinse and prepare the ${main} according to its texture.`, 'Layer the remaining ingredients in a warm bowl.', 'Finish with lemon, oil, and a final seasoning check.'], chefTip: 'Taste at the end and adjust salt after adding the bright finish.',
+    },
+    {
+      id: 'pantry-stew', title: `One-pot ${main} dinner`, prepTime: '35 min', difficulty: skill === 'Pro Chef' ? 'Hard' : 'Medium', matchScore: '86% match with your pantry',
+      summary: `A cozy one-pot approach for turning ${main} and your pantry into dinner.`, ingredientsUsed: used, missingIngredients: [{ item: 'vegetable stock', quantity: '2 cups' }],
+      steps: ['Build a fragrant base in a heavy pot.', `Add the ${pantry.join(', ')} and stir to coat.`, 'Add stock, simmer gently, and serve when tender.'], chefTip: 'Keep the simmer gentle to concentrate flavor without drying the ingredients.',
+    },
+  ]
+}
+
+function formatSkillLevel(skill: string) {
+  return ({
+    'lazy-amateur': 'Lazy Amateur',
+    'home-cook': 'Home Cook',
+    'pro-chef': 'Pro Chef',
+  } as Record<string, string>)[skill] ?? skill
+}
 
 function writeChunk(response: ServerResponse, chunk: unknown) {
   response.write(`${JSON.stringify(chunk)}\n`)
 }
 
-async function streamFallback(response: ServerResponse, ingredients: string[]) {
-  const selected = fallbackRecipes.map((recipe) => ({
-    ...recipe,
-    ingredientsUsed: recipe.ingredientsUsed.map((item) => item.replace(/\d+[^a-zA-Z]*/, ''))
-      .map((item) => `${item.trim()} (${ingredients[0] ?? 'pantry staple'})`),
-  }))
+async function streamFallback(response: ServerResponse, ingredients: string[], skill: string) {
+  const selected = buildFallbackRecipes(ingredients, skill)
 
   for (let index = 1; index <= selected.length; index += 1) {
     writeChunk(response, selected.slice(0, index))
@@ -79,7 +70,8 @@ export async function generateRecipes(request: IncomingMessage, response: Server
     return true
   }
 
-  if (!input.skill || !Array.isArray(input.ingredients) || input.ingredients.length === 0) {
+  const skill = formatSkillLevel(input.skillLevel ?? input.skill ?? '')
+  if (!skill || !Array.isArray(input.ingredients) || input.ingredients.length === 0) {
     response.statusCode = 400
     response.end(JSON.stringify({ error: 'A cooking style and at least one ingredient are required.' }))
     return true
@@ -90,26 +82,53 @@ export async function generateRecipes(request: IncomingMessage, response: Server
   response.setHeader('Cache-Control', 'no-cache, no-transform')
   response.setHeader('Connection', 'keep-alive')
 
-  if (!process.env.OPENAI_API_KEY) {
-    await streamFallback(response, input.ingredients)
+  if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+    await streamFallback(response, input.ingredients, skill)
     response.end()
     return true
   }
 
-  const openai = createOpenAI({ apiKey: process.env.OPENAI_API_KEY })
-  const result = streamObject({
-    model: openai('gpt-4o-mini'),
-    schema: recipeResponseSchema,
-    schemaName: 'recipeResponse',
-    schemaDescription: 'One to three practical recipes ranked by ingredient match.',
-    prompt: `Create 1 to 3 recipes for a ${input.skill} cook using these kitchen ingredients: ${input.ingredients.join(', ')}. Include exact measurements in ingredientsUsed and missingIngredients. Keep steps concise and useful.`,
+  const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY })
+  const abortController = new AbortController()
+  const abortTimer = setTimeout(() => abortController.abort(), 10000)
+  const result = streamText({
+    model: google(process.env.GEMINI_MODEL ?? 'gemini-3.6-flash'),
+    maxRetries: 0,
+    abortSignal: abortController.signal,
+    output: Output.object({
+      schema: recipeResponseSchema,
+      name: 'recipeResponse',
+      description: 'One to three practical recipes ranked by ingredient match. Every ingredient must include a realistic quantity.',
+    }),
+    system: `You are a precise recipe developer. Adapt complexity to the cook skill level: Lazy Amateur means minimal steps, Home Cook means approachable prep, and Pro Chef means advanced techniques. Use only realistic measurements. Return strictly the requested structured recipe array.`,
+    prompt: `Create 1 to 3 recipes for a ${skill} cook using these exact kitchen ingredients: ${input.ingredients.join(', ')}. Use the supplied ingredients in ingredientsUsed, put pantry gaps in missingIngredients, and include exact quantity strings for every ingredient.`,
   })
 
+  let streamedChunk = false
+  const streamPromise = (async () => {
+    for await (const partialRecipes of result.partialOutputStream) {
+      streamedChunk = true
+      writeChunk(response, partialRecipes)
+    }
+  })()
+  const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 10000))
+
   try {
-    for await (const partialRecipes of result.partialObjectStream) writeChunk(response, partialRecipes)
-  } catch {
-    if (!response.headersSent) response.statusCode = 502
-    writeChunk(response, { error: 'Recipe generation failed.' })
+    const outcome = await Promise.race([
+      streamPromise.then(() => 'complete' as const).catch(() => 'error' as const),
+      timeoutPromise,
+    ])
+
+    if (!streamedChunk) {
+      abortController.abort()
+      await streamFallback(response, input.ingredients, skill)
+    } else if (outcome === 'error' && streamedChunk) {
+      writeChunk(response, { error: 'Recipe generation was interrupted.' })
+    }
+  } finally {
+    abortController.abort()
+    clearTimeout(abortTimer)
+    await streamPromise
   }
 
   response.end()

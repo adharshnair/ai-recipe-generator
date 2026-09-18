@@ -26,7 +26,7 @@ export function RecipeCard({ recipe, index, onOpen }: RecipeCardProps) {
       transition={{ duration: 0.4, delay: index * 0.1 }}
     >
       <div className="recipe-card-topline">
-        <span className="recipe-match"><Sparkles size={12} /> {recipe.matchScore ?? '--'}% match</span>
+        <span className="recipe-match"><Sparkles size={12} /> {recipe.matchScore ?? 'Matching pantry'}</span>
         <button className="recipe-open" type="button" aria-label={`Open ${recipe.title ?? 'recipe'}`} onClick={(event) => { event.stopPropagation(); onOpen() }}>
           <ArrowUpRight size={16} />
         </button>
@@ -38,7 +38,7 @@ export function RecipeCard({ recipe, index, onOpen }: RecipeCardProps) {
         <span>{recipe.difficulty ?? 'Flexible'}</span>
       </div>
       <div className="recipe-ingredients">
-        {recipe.ingredientsUsed?.slice(0, 3).map((ingredient) => <span key={ingredient}>{ingredient}</span>)}
+        {recipe.ingredientsUsed?.slice(0, 3).map((ingredient) => <span key={ingredient.item}>{ingredient.quantity} {ingredient.item}</span>)}
         {recipe.missingIngredients && recipe.missingIngredients.length > 0 && (
           <span className="missing-ingredient"><CircleAlert size={12} /> {recipe.missingIngredients.length} to get</span>
         )}

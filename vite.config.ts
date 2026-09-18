@@ -1,10 +1,14 @@
-import { defineConfig } from 'vite'
+import { defineConfig, loadEnv } from 'vite'
 import react from '@vitejs/plugin-react'
 import tailwindcss from '@tailwindcss/vite' // 1. Import it
 import path from 'path' // Required for resolving aliases safely
 import { generateRecipes } from './server/generate-recipes.ts'
 
-export default defineConfig({
+export default defineConfig(({ mode }) => {
+  const env = loadEnv(mode, process.cwd(), '')
+  Object.assign(process.env, env)
+
+  return {
   plugins: [
     react(),
     tailwindcss(), // 2. Add it here
@@ -20,7 +24,8 @@ export default defineConfig({
   ],
   resolve: {
     alias: {
-      "@": path.resolve(__dirname, "./src"), // 3. Maps `@` to your `src` folder
+      "@": path.resolve(import.meta.dirname, "./src"), // 3. Maps `@` to your `src` folder
     },
   },
+  }
 })

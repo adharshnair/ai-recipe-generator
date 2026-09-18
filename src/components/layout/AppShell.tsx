@@ -15,8 +15,8 @@ export function AppShell({ children, headerContent }: AppShellProps) {
 
       <header className="topbar">
         <a className="brand" href="/" aria-label="mise home">
-          <span className="brand-mark"><ChefHat size={14} strokeWidth={2.5} /></span>
-          <span>mise</span>
+          <span><img src="/favicon.svg" alt="mise logo" width={24} height={24} /></span>
+          <span>mise.</span>
         </a>
         {headerContent}
         <div className="header-actions">
@@ -28,9 +28,9 @@ export function AppShell({ children, headerContent }: AppShellProps) {
       {children}
 
       <footer className="app-footer">
-        <span>made for curious cooks</span>
+        <span><img src="/favicon.svg" alt="mise logo" width={18} height={18} /></span>
         <span className="footer-rule" />
-        <span>v0.1 / private kitchen</span>
+        <span>made for curious cooks</span>
       </footer>
     </main>
   )

@@ -1,3 +1,4 @@
+import { motion } from 'motion/react'
 import { Fragment } from 'react'
 
 const steps = ['Your style', 'Your ingredients', 'Your recipes']
@@ -11,11 +12,20 @@ export function ProgressStepper({ activeStep = 0 }: ProgressStepperProps) {
     <nav className="stepper" aria-label="Recipe generator steps">
       {steps.map((step, index) => (
         <Fragment key={step}>
-          <div className={`step ${index === activeStep ? 'is-active' : ''} ${index < activeStep ? 'is-complete' : ''}`}>
+          <motion.div
+            className={`step ${index === activeStep ? 'is-active' : ''} ${index < activeStep ? 'is-complete' : ''}`}
+            layout
+            transition={{ type: 'spring', stiffness: 360, damping: 28, mass: 0.8 }}
+          >
             <span className="step-number">{String(index + 1).padStart(2, '0')}</span>
             <span>{step}</span>
-          </div>
-          {index < steps.length - 1 && <span className={`progress-connector ${index < activeStep ? 'is-complete' : ''}`} aria-hidden="true" />}
+          </motion.div>
+          {index < steps.length - 1 && <motion.span
+            className={`progress-connector ${index < activeStep ? 'is-complete' : ''}`}
+            aria-hidden="true"
+            layout
+            transition={{ type: 'spring', stiffness: 320, damping: 26 }}
+          />}
         </Fragment>
       ))}
     </nav>

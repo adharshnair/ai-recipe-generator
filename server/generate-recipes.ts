@@ -1,37 +1,14 @@
+/// <reference types="node" />
+
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { Output, streamText } from 'ai'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { recipeResponseSchema, type Recipe } from '../src/data/recipe-schema.ts'
+import { recipeSchema, type Recipe } from '../src/data/recipe-schema.ts'
 
 type RecipeRequest = {
   skill?: string
   skillLevel?: string
   ingredients: string[]
-}
-
-function buildFallbackRecipes(ingredients: string[], skill: string): Recipe[] {
-  const pantry = ingredients.map((item) => item.trim()).filter(Boolean)
-  const used = pantry.slice(0, 4).map((item, index) => ({ item, quantity: index === 0 ? '1 cup' : '1 portion' }))
-  const missing = [{ item: 'olive oil', quantity: '1 tbsp' }, { item: 'kosher salt', quantity: '1/2 tsp' }]
-  const main = pantry[0] ?? 'pantry ingredients'
-
-  return [
-    {
-      id: 'pantry-skillet', title: `${main} ${skill} skillet`, prepTime: '20 min', difficulty: 'Easy', matchScore: '100% match with your pantry',
-      summary: `A practical skillet built around ${pantry.join(', ')}.`, ingredientsUsed: used, missingIngredients: missing,
-      steps: [`Prep and portion the ${pantry.join(' and ')}.`, 'Warm a skillet over medium heat and add the oil.', 'Cook until browned, season, and serve hot.'], chefTip: 'Give each ingredient room in the pan so it browns instead of steaming.',
-    },
-    {
-      id: 'pantry-bowl', title: `${main} comfort bowl`, prepTime: '25 min', difficulty: 'Easy', matchScore: '92% match with your pantry',
-      summary: `A flexible bowl that makes ${main} the center of the meal.`, ingredientsUsed: used.slice(0, 3), missingIngredients: [{ item: 'lemon', quantity: '1/2' }],
-      steps: [`Rinse and prepare the ${main} according to its texture.`, 'Layer the remaining ingredients in a warm bowl.', 'Finish with lemon, oil, and a final seasoning check.'], chefTip: 'Taste at the end and adjust salt after adding the bright finish.',
-    },
-    {
-      id: 'pantry-stew', title: `One-pot ${main} dinner`, prepTime: '35 min', difficulty: skill === 'Pro Chef' ? 'Hard' : 'Medium', matchScore: '86% match with your pantry',
-      summary: `A cozy one-pot approach for turning ${main} and your pantry into dinner.`, ingredientsUsed: used, missingIngredients: [{ item: 'vegetable stock', quantity: '2 cups' }],
-      steps: ['Build a fragrant base in a heavy pot.', `Add the ${pantry.join(', ')} and stir to coat.`, 'Add stock, simmer gently, and serve when tender.'], chefTip: 'Keep the simmer gentle to concentrate flavor without drying the ingredients.',
-    },
-  ]
 }
 
 function formatSkillLevel(skill: string) {
@@ -46,13 +23,19 @@ function writeChunk(response: ServerResponse, chunk: unknown) {
   response.write(`${JSON.stringify(chunk)}\n`)
 }
 
-async function streamFallback(response: ServerResponse, ingredients: string[], skill: string) {
-  const selected = buildFallbackRecipes(ingredients, skill)
+function getGenerationError(error: unknown) {
+  if (typeof error !== 'object' || error === null) return 'Recipe generation failed. Please try again.'
 
-  for (let index = 1; index <= selected.length; index += 1) {
-    writeChunk(response, selected.slice(0, index))
-    await new Promise((resolve) => setTimeout(resolve, 180))
+  const providerError = error as { statusCode?: number; message?: string; data?: { error?: { message?: string } } }
+  const message = providerError.data?.error?.message ?? providerError.message ?? ''
+
+  if (providerError.statusCode === 429 || message.includes('quota')) {
+    const retryMatch = message.match(/retry in ([\d.]+)s/i)
+    const retryMessage = retryMatch ? ` Try again in about ${Math.ceil(Number(retryMatch[1]))} seconds.` : ' Please check your Gemini API quota or billing plan.'
+    return `Recipe generation quota exceeded.${retryMessage}`
   }
+
+  return 'Recipe generation failed. Please try again.'
 }
 
 export async function generateRecipes(request: IncomingMessage, response: ServerResponse) {
@@ -83,7 +66,7 @@ export async function generateRecipes(request: IncomingMessage, response: Server
   response.setHeader('Connection', 'keep-alive')
 
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-    await streamFallback(response, input.ingredients, skill)
+    writeChunk(response, { error: 'Recipe generation is unavailable because GOOGLE_GENERATIVE_AI_API_KEY is not configured.' })
     response.end()
     return true
   }
@@ -92,38 +75,46 @@ export async function generateRecipes(request: IncomingMessage, response: Server
   const abortController = new AbortController()
   const abortTimer = setTimeout(() => abortController.abort(), 10000)
   const result = streamText({
-    model: google(process.env.GEMINI_MODEL ?? 'gemini-3.6-flash'),
+    model: google(process.env.GEMINI_MODEL ?? 'gemini-3.5-flash-lite'),
     maxRetries: 0,
     abortSignal: abortController.signal,
-    output: Output.object({
-      schema: recipeResponseSchema,
+    output: Output.array({
+      element: recipeSchema,
+      minItems: 3,
+      maxItems: 3,
       name: 'recipeResponse',
-      description: 'One to three practical recipes ranked by ingredient match. Every ingredient must include a realistic quantity.',
+      description: 'Exactly three practical recipes ranked by ingredient match. Every ingredient must include a realistic quantity and every recipe must include complete steps.',
     }),
-    system: `You are a precise recipe developer. Adapt complexity to the cook skill level: Lazy Amateur means minimal steps, Home Cook means approachable prep, and Pro Chef means advanced techniques. Use only realistic measurements. Return strictly the requested structured recipe array.`,
-    prompt: `Create 1 to 3 recipes for a ${skill} cook using these exact kitchen ingredients: ${input.ingredients.join(', ')}. Use the supplied ingredients in ingredientsUsed, put pantry gaps in missingIngredients, and include exact quantity strings for every ingredient.`,
+    system: `You are a precise recipe developer. The selected cook level controls the number and depth of the instructions. Lazy Amateur recipes must use 2 to 3 short, simple steps. Home Cook recipes must use 4 to 6 intermediate steps with useful details about preparation, heat, timing, and order. Pro Chef recipes must use 10 to 20 highly detailed steps with professional technique, temperatures, timing, sequencing, and sensory cues. Never collapse every recipe to the same generic three-step format. Every ingredient in ingredientsUsed and missingIngredients must have a realistic measured quantity. Every cooking step must also include measurements wherever an ingredient, liquid, seasoning, temperature, or time is used. Return strictly the requested structured recipe array.`,
+    prompt: `Create exactly 3 recipes for a ${skill} cook using these exact kitchen ingredients: ${input.ingredients.join(', ')}. Follow the ${skill} step-count and detail rules exactly. Return all 3 complete recipes in the same response, including every recipe's steps. Use the supplied ingredients in ingredientsUsed, put pantry gaps in missingIngredients, and include exact quantity strings for every ingredient and measurement details in every step.`,
   })
 
   let streamedChunk = false
+  let streamError: unknown
+  const streamedRecipes: Recipe[] = []
   const streamPromise = (async () => {
-    for await (const partialRecipes of result.partialOutputStream) {
-      streamedChunk = true
-      writeChunk(response, partialRecipes)
+    try {
+      for await (const recipe of result.elementStream) {
+        streamedChunk = true
+        streamedRecipes.push(recipe)
+        writeChunk(response, streamedRecipes)
+      }
+    } catch (error) {
+      streamError = error
     }
   })()
   const timeoutPromise = new Promise<'timeout'>((resolve) => setTimeout(() => resolve('timeout'), 10000))
 
   try {
     const outcome = await Promise.race([
-      streamPromise.then(() => 'complete' as const).catch(() => 'error' as const),
+      streamPromise.then(() => streamError ? 'error' as const : 'complete' as const),
       timeoutPromise,
     ])
 
     if (!streamedChunk) {
-      abortController.abort()
-      await streamFallback(response, input.ingredients, skill)
-    } else if (outcome === 'error' && streamedChunk) {
-      writeChunk(response, { error: 'Recipe generation was interrupted.' })
+      writeChunk(response, { error: outcome === 'timeout' ? 'Recipe generation timed out. Please try again.' : getGenerationError(streamError) })
+    } else if (outcome === 'error') {
+      writeChunk(response, { error: getGenerationError(streamError) })
     }
   } finally {
     abortController.abort()

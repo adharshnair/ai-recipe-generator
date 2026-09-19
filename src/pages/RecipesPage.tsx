@@ -13,7 +13,8 @@ type RecipesPageProps = {
 }
 
 export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPageProps) {
-  const [selectedRecipe, setSelectedRecipe] = useState<Partial<Recipe> | null>(null)
+  const [selectedRecipeId, setSelectedRecipeId] = useState<string | null>(null)
+  const selectedRecipe = recipes.find((recipe) => recipe.id === selectedRecipeId) ?? null
 
   return (
     <section className="wizard recipes-page" aria-labelledby="recipes-title">
@@ -37,7 +38,7 @@ export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPagePr
 
       {recipes.length > 0 && (
         <div className={`recipe-grid recipe-grid-${Math.min(recipes.length, 3)}`}>
-          {recipes.map((recipe, index) => <RecipeCard key={recipe.id ?? index} recipe={recipe} index={index} onOpen={() => setSelectedRecipe(recipe)} />)}
+          {recipes.map((recipe, index) => <RecipeCard key={recipe.id ?? index} recipe={recipe} index={index} onOpen={() => setSelectedRecipeId(recipe.id ?? null)} />)}
         </div>
       )}
 
@@ -46,7 +47,7 @@ export function RecipesPage({ recipes, isLoading, error, onBack }: RecipesPagePr
         {isLoading && <span className="stream-status"><span /> streaming ideas</span>}
       </div>
 
-      <RecipeDetailsDialog recipe={selectedRecipe} onClose={() => setSelectedRecipe(null)} />
+      <RecipeDetailsDialog recipe={selectedRecipe} onClose={() => setSelectedRecipeId(null)} />
     </section>
   )
 }

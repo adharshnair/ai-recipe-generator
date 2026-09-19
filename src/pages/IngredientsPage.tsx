@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from 'motion/react'
-import { ArrowLeft, ArrowRight, Command, Plus, Sparkles } from 'lucide-react'
+import { ArrowLeft, ArrowRight, Plus, Sparkles } from 'lucide-react'
 import { useState, type FormEvent, type KeyboardEvent } from 'react'
 import { IngredientTag } from '../components/wizard/IngredientTag'
 
@@ -59,7 +59,7 @@ export function IngredientsPage({
 
       <motion.div className="ingredient-console" initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.45, delay: 0.16 }}>
         <form className="ingredient-form" onSubmit={handleSubmit}>
-          <Command className="command-icon" size={18} />
+          <Plus className="command-icon" size={18} />
           <input
             value={input}
             onChange={(event) => setInput(event.target.value)}

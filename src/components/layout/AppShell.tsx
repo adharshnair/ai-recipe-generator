@@ -1,4 +1,3 @@
-import { ChefHat } from 'lucide-react'
 import type { ReactNode } from 'react'
 import { ThemeSwitcher } from '../theme/ThemeSwitcher'
 

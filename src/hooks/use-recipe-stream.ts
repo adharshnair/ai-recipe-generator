@@ -43,10 +43,14 @@ export function useRecipeStream() {
         for (const line of lines) {
           if (!line.trim()) continue
           const chunk = JSON.parse(line) as PartialRecipe[] | { error?: string }
+
           if (!Array.isArray(chunk)) {
-            throw new Error(chunk.error ?? 'Recipe generation failed.')
+            const message = chunk.error ?? 'Recipe generation failed.'
+            setState((current) => ({ ...current, isLoading: false, error: message }))
+            return
           }
-          setState((current) => ({ ...current, recipes: chunk }))
+
+          setState((current) => ({ ...current, recipes: chunk, error: null }))
         }
 
         if (done) break

@@ -126,3 +126,15 @@ ai-recipe-generator/
 | Dark mode | Light mode |
 | --- | --- |
 | <img src="./public/design/ingredient-input-flow.png" alt="Ingredient input screen in dark mode" width="420" /> | <img src="./public/design/ingredient-input-flow_light-mode.png" alt="Ingredient input screen in light mode" width="420" /> |
+
+### Generated Recipes
+
+| Dark mode | Light mode |
+| --- | --- |
+| <img src="./public/design/recipe.png" alt="Generated recipes screen in dark mode" width="420" /> | <img src="./public/design/recipe_light-mode.png" alt="Generated recipes screen in light mode" width="420" /> |
+
+### Recipe Details
+
+| Dark mode | Light mode |
+| --- | --- |
+| <img src="./public/design/recipe-details.png" alt="Recipe details screen in dark mode" width="420" /> | <img src="./public/design/recipe-details_light-mode.png" alt="Recipe details screen in light mode" width="420" /> |

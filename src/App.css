@@ -1389,8 +1389,17 @@ kbd {
     white-space: nowrap;
   }
   .app-footer {
-    justify-content: space-between;
+    display: grid;
+    grid-template-columns: auto auto;
+    justify-content: initial;
+    gap: 14px;
     font-size: 8px;
+  }
+  .app-footer .footer-rule {
+    display: none;
+  }
+  .app-footer > span:last-child {
+    margin-left: auto;
   }
 }
 .counter {

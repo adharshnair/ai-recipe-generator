@@ -1,4 +1,4 @@
-import type { ReactNode } from 'react'
+import { useEffect, useState, type ReactNode } from 'react'
 import { ThemeSwitcher } from '../theme/ThemeSwitcher'
 
 type AppShellProps = {
@@ -7,12 +7,24 @@ type AppShellProps = {
 }
 
 export function AppShell({ children, headerContent }: AppShellProps) {
+  const [isScrolled, setIsScrolled] = useState(false)
+
+  useEffect(() => {
+    function handleScroll() {
+      setIsScrolled(window.scrollY > 8)
+    }
+
+    handleScroll()
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [])
+
   return (
     <main className="app-shell">
       <div className="spotlight spotlight-left" />
       <div className="spotlight spotlight-right" />
 
-      <header className="topbar">
+      <header className={`topbar ${isScrolled ? 'is-scrolled' : ''}`}>
         <a className="brand" href="/" aria-label="mise home">
           <span><img src="/favicon.svg" alt="mise logo" width={24} height={24} /></span>
           <span>mise.</span>

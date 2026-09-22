@@ -97,20 +97,21 @@ html {
   border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 14px;
   padding: 12px 18px;
-  background: rgba(18, 18, 22, 0.68);
+  background-color: rgba(18, 18, 22, 0.52);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.12), rgba(255, 255, 255, 0.02));
   box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.25),
-    inset 0 1px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px) saturate(135%);
-  -webkit-backdrop-filter: blur(18px) saturate(135%);
+    0 18px 45px rgba(0, 0, 0, 0.22),
+    inset 0 1px rgba(255, 255, 255, 0.12);
+  backdrop-filter: blur(22px) saturate(170%);
+  -webkit-backdrop-filter: blur(22px) saturate(170%);
   transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 .topbar.is-scrolled {
-  background: rgba(18, 18, 22, 0.82);
+  background-color: rgba(18, 18, 22, 0.64);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
-    0 18px 45px rgba(0, 0, 0, 0.34),
-    inset 0 1px rgba(255, 255, 255, 0.1);
+    0 18px 45px rgba(0, 0, 0, 0.3),
+    inset 0 1px rgba(255, 255, 255, 0.14);
 }
 .brand {
   display: inline-flex;
@@ -175,7 +176,7 @@ html {
   width: 29px;
   height: 29px;
   place-items: center;
-  border: 1px solid rgba(255, 255, 255, 0.13);
+  border: 1px solid rgba(255, 255, 255, 0.12);
   border-radius: 8px;
   color: #a9a9b1;
   background: rgba(255, 255, 255, 0.05);
@@ -197,37 +198,61 @@ html {
   top: calc(100% + 9px);
   right: 0;
   display: grid;
-  min-width: 132px;
-  gap: 3px;
-  border: 1px solid rgba(255, 255, 255, 0.13);
-  border-radius: 10px;
-  padding: 5px;
-  background: rgba(24, 24, 28, 0.94);
-  box-shadow:
-    0 18px 36px rgba(0, 0, 0, 0.3),
-    inset 0 1px rgba(255, 255, 255, 0.08);
-  backdrop-filter: blur(18px);
-  -webkit-backdrop-filter: blur(18px);
+  width: 180px;
+  gap: 7px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 14px;
+  padding: 8px;
+  background: rgba(18, 18, 22, 0.96);
+  box-shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
 }
 .theme-option {
   display: flex;
   align-items: center;
-  gap: 9px;
-  border: 0;
-  border-radius: 6px;
-  padding: 8px 9px;
-  color: #96969f;
+  gap: 10px;
+  border: 1px solid transparent;
+  border-radius: 10px;
+  padding: 9px 10px;
+  color: #dfe4ea;
   background: transparent;
-  font: 12px inherit;
+  font: 14px inherit;
   text-align: left;
   cursor: pointer;
+  transition: background 160ms ease, border-color 160ms ease, color 160ms ease;
+}
+.theme-option-icon {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  color: inherit;
 }
 .theme-option:hover,
 .theme-option:focus-visible,
 .theme-option.is-active {
-  color: #effffb;
+  color: #e9fffb;
+  border-color: rgba(101, 199, 172, 0.2);
   background: rgba(101, 199, 172, 0.12);
   outline: 0;
+}
+:root[data-theme="light"] .theme-menu {
+  border-color: rgba(24, 24, 27, 0.12);
+  background: #f3f5f1;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: 1;
+}
+:root[data-theme="light"] .theme-option {
+  color: #575d67;
+  background: rgba(24, 24, 27, 0.02);
+}
+:root[data-theme="light"] .theme-option:hover,
+:root[data-theme="light"] .theme-option:focus-visible,
+:root[data-theme="light"] .theme-option.is-active {
+  color: #0f574e;
+  border-color: rgba(21, 92, 77, 0.18);
+  background: rgba(149, 223, 203, 0.3);
 }
 .topbar > .stepper {
   min-width: 0;
@@ -1661,17 +1686,21 @@ html::-webkit-scrollbar,
 }
 :root[data-theme="light"] .topbar {
   border-color: rgba(24, 24, 27, 0.12);
-  background: rgba(255, 255, 255, 0.7);
+  background-color: rgba(255, 255, 255, 0.56);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(233, 240, 237, 0.74));
   box-shadow:
     0 18px 45px rgba(40, 50, 44, 0.12),
-    inset 0 1px rgba(255, 255, 255, 0.8);
+    inset 0 1px rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(24px) saturate(220%);
+  -webkit-backdrop-filter: blur(24px) saturate(220%);
 }
 :root[data-theme="light"] .topbar.is-scrolled {
-  border-color: rgba(24, 24, 27, 0.18);
-  background: rgba(241, 245, 243, 0.82);
+  border-color: rgba(24, 24, 27, 0.16);
+  background-color: rgba(255, 255, 255, 0.7);
+  background-image: linear-gradient(180deg, rgba(255, 255, 255, 0.96), rgba(235, 241, 238, 0.82));
   box-shadow:
-    0 18px 45px rgba(40, 50, 44, 0.18),
-    inset 0 1px rgba(255, 255, 255, 0.9);
+    0 18px 45px rgba(40, 50, 44, 0.16),
+    inset 0 1px rgba(255, 255, 255, 0.95);
 }
 :root[data-theme="light"] .brand {
   color: #18181b;
@@ -1819,23 +1848,31 @@ html::-webkit-scrollbar,
   color: #a1a1aa;
 }
 :root[data-theme="light"] .theme-trigger {
-  border-color: rgba(24, 24, 27, 0.13);
-  color: #52525b;
-  background: rgba(24, 24, 27, 0.05);
+  border-color: rgba(24, 24, 27, 0.14);
+  color: #444750;
+  background: rgba(255, 255, 255, 0.72);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.9);
 }
 :root[data-theme="light"] .theme-menu {
   border-color: rgba(24, 24, 27, 0.12);
-  background: rgba(255, 255, 255, 0.92);
-  box-shadow: 0 18px 36px rgba(40, 50, 44, 0.16);
+  background: #f3f5f1;
+  box-shadow: 0 16px 32px rgba(15, 23, 42, 0.08);
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+  opacity: 1;
 }
 :root[data-theme="light"] .theme-option {
-  color: #71717a;
+  color: #525b66;
+  background: rgba(24, 24, 27, 0.02);
 }
 :root[data-theme="light"] .theme-option:hover,
 :root[data-theme="light"] .theme-option:focus-visible,
 :root[data-theme="light"] .theme-option.is-active {
-  color: #145c4f;
-  background: rgba(38, 155, 125, 0.1);
+  color: #0f574e;
+  border-color: rgba(21, 92, 77, 0.18);
+  background: rgba(149, 223, 203, 0.3);
 }
 :root[data-theme="light"] .recipes-intro em {
   color: #237b68;

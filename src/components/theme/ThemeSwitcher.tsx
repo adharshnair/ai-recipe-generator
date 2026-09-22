@@ -82,7 +82,7 @@ export function ThemeSwitcher() {
                 aria-checked={mode === option.value}
                 onClick={() => selectTheme(option.value)}
               >
-                <Icon size={14} />
+                <span className="theme-option-icon"><Icon size={15} /></span>
                 <span>{option.label}</span>
               </button>
             )

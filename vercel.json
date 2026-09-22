@@ -1,7 +1,0 @@
-{
-  "functions": {
-    "api/generate-recipes.ts": {
-      "maxDuration": 30
-    }
-  }
-}

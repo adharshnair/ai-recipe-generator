@@ -3,7 +3,7 @@
 import { createGoogleGenerativeAI } from '@ai-sdk/google'
 import { Output, streamText } from 'ai'
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { recipeSchema, type Recipe } from '../src/data/recipe-schema.ts'
+import { recipeSchema, type Recipe } from '../src/data/recipe-schema.js'
 
 type RecipeRequest = {
   skill?: string

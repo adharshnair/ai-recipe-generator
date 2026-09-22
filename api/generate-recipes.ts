@@ -1,7 +1,7 @@
 /// <reference types="node" />
 
 import type { IncomingMessage, ServerResponse } from 'node:http'
-import { handleGenerateRecipes } from '../server/generate-recipes.ts'
+import { handleGenerateRecipes } from '../server/generate-recipes.js'
 
 /**
  * Vercel serverless function for POST /api/generate-recipes.

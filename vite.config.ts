@@ -14,7 +14,16 @@ export default defineConfig(({ mode }) => {
     tailwindcss(), // 2. Add it here
     {
       name: 'recipe-api',
+      // `configureServer` only runs under `vite dev`, and `configurePreviewServer`
+      // only under `vite preview`, so both are registered. Production on Vercel is
+      // served by the serverless function in api/generate-recipes.ts.
       configureServer(server) {
+        server.middlewares.use(async (request, response, next) => {
+          if (await generateRecipes(request, response)) return
+          next()
+        })
+      },
+      configurePreviewServer(server) {
         server.middlewares.use(async (request, response, next) => {
           if (await generateRecipes(request, response)) return
           next()
@@ -29,3 +38,4 @@ export default defineConfig(({ mode }) => {
   },
   }
 })
+

@@ -38,26 +38,45 @@ function getGenerationError(error: unknown) {
   return 'Recipe generation failed. Please try again.'
 }
 
-export async function generateRecipes(request: IncomingMessage, response: ServerResponse) {
-  if (request.method !== 'POST' || request.url !== '/api/generate-recipes') return false
+/**
+ * Reads the JSON request body. Some hosts (notably the Vercel Node runtime)
+ * consume the request stream and hand the handler an already-parsed body, so
+ * prefer that when it is supplied and only fall back to reading the stream.
+ */
+async function readRecipeRequest(request: IncomingMessage, preParsedBody?: unknown): Promise<RecipeRequest> {
+  if (typeof preParsedBody === 'string') return JSON.parse(preParsedBody) as RecipeRequest
+  if (Buffer.isBuffer(preParsedBody)) return JSON.parse(preParsedBody.toString('utf8')) as RecipeRequest
+  if (typeof preParsedBody === 'object' && preParsedBody !== null) return preParsedBody as RecipeRequest
 
   let body = ''
   for await (const chunk of request) body += chunk
+  return JSON.parse(body) as RecipeRequest
+}
 
+/**
+ * Core request handler, shared by the Vite dev middleware and the Vercel
+ * serverless function in `api/generate-recipes.ts`. It does no routing of its
+ * own so each host can decide how the route is matched.
+ */
+export async function handleGenerateRecipes(
+  request: IncomingMessage,
+  response: ServerResponse,
+  preParsedBody?: unknown,
+) {
   let input: RecipeRequest
   try {
-    input = JSON.parse(body) as RecipeRequest
+    input = await readRecipeRequest(request, preParsedBody)
   } catch {
     response.statusCode = 400
     response.end(JSON.stringify({ error: 'Invalid recipe request.' }))
-    return true
+    return
   }
 
   const skill = formatSkillLevel(input.skillLevel ?? input.skill ?? '')
   if (!skill || !Array.isArray(input.ingredients) || input.ingredients.length === 0) {
     response.statusCode = 400
     response.end(JSON.stringify({ error: 'A cooking style and at least one ingredient are required.' }))
-    return true
+    return
   }
 
   response.statusCode = 200
@@ -68,7 +87,7 @@ export async function generateRecipes(request: IncomingMessage, response: Server
   if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
     writeChunk(response, { error: 'Recipe generation is unavailable because GOOGLE_GENERATIVE_AI_API_KEY is not configured.' })
     response.end()
-    return true
+    return
   }
 
   const google = createGoogleGenerativeAI({ apiKey: process.env.GOOGLE_GENERATIVE_AI_API_KEY })
@@ -123,5 +142,16 @@ export async function generateRecipes(request: IncomingMessage, response: Server
   }
 
   response.end()
+}
+
+/**
+ * Vite dev-server middleware adapter. Returns true when it has handled the
+ * request so the middleware chain can stop.
+ */
+export async function generateRecipes(request: IncomingMessage, response: ServerResponse) {
+  const pathname = request.url?.split('?')[0]
+  if (request.method !== 'POST' || pathname !== '/api/generate-recipes') return false
+
+  await handleGenerateRecipes(request, response)
   return true
 }
